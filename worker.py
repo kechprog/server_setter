@@ -6,7 +6,10 @@ command="#!/bin/bash\n/usr/bin/miner --algo 144_5 --pers BgoldPoW --server asia-
 
 def get_miner_name():
     with open('/big_command.sh') as f:
-        return f.read()[-4:-1]
+        content = f.read()
+        for idx, c in reversed(list(enumerate(content))):
+            if c == '.':
+                return content[idx+1:].strip()
 
 def save_command(id):
     with open('/big_command.sh', 'w') as f:
@@ -37,3 +40,5 @@ if __name__ == "__main__":
     os.system('systemctl restart avahi-daemon')
 
     save_command(id)
+    print('Rebooting...')
+    os.system('reboot')

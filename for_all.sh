@@ -16,10 +16,15 @@ get_local_ips() {
     arp-scan --localnet --interface=enp2s0 | grep -E "([a-f0-9]{2}:){5}[a-f0-9]{2}"
 }
 
-# Store the result of the ARP scan
+deploy() {
+    sshpass -p "0" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 worker.py emperor@$1:/tmp/worker.py </dev/null
+    sshpass -p "0" ssh -tt -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 emperor@$1 "echo 0 | sudo -S python3 /tmp/worker.py $2" </dev/null
+}
+
 active_hosts=$(get_local_ips $subnet)
 
-# Process each active host
+counter=0
+
 while read -r line
 do
     ip=$(echo $line | awk '{print $1}')
@@ -27,11 +32,9 @@ do
 
     echo "Working on: $ip"
 
-    command="./deploy.sh $ip"
-
 	read -p "Run? (y/n) " yn < /dev/tty
     case $yn in
-        [Yy]* ) $command;;
+        [Yy]* ) deploy $ip $((counter++));;
         [Nn]* ) echo "Skipping...";;
         * ) echo "Please answer yes or no.";;
     esac
